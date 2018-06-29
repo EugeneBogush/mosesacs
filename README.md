@@ -1,5 +1,7 @@
 # Moses ACS
 
+go get github.com/slavikm/liner
+
 An ACS in Go for provisioning CPEs, suitable for test purposes or production deployment.
 
 ## Getting started
