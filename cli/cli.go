@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	//	"encoding/xml"
 	"fmt"
-	"github.com/lucacervasio/liner"
+	"github.com/slavikm/liner"
 	"github.com/yrong/mosesacs/cwmp"
 	"github.com/yrong/mosesacs/daemon"
 	"os"
