@@ -21,6 +21,12 @@ const Version = "0.2.6"
 var logger MosesWriter
 var xmppGlobalUser string
 
+var CWMP_ID string
+
+func Get_ID() string {
+	return CWMP_ID
+}
+
 type MosesWriter interface {
 	Logger(string)
 }
@@ -141,6 +147,7 @@ func CwmpHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("Received an Inform from %s (%d bytes) with SerialNumber %s and EventCodes %s", addr, len, Inform.DeviceId.SerialNumber, Inform.GetEvents())
 		log.Printf("Soap envelope has mustUnderstand %s\n", envelope.Header.Id)
+		CWMP_ID = envelope.Header.Id
 //		logger.Logger("ciao")
 		sendAll(fmt.Sprintf("Received an Inform from %s (%d bytes) with SerialNumber %s and EventCodes %s", addr, len, Inform.DeviceId.SerialNumber, Inform.GetEvents()))
 
