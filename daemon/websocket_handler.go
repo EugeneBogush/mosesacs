@@ -206,16 +206,21 @@ func websocketHandler(ws *websocket.Conn) {
 			}
 		} else if strings.Contains(m, "readMib") {
 			i := strings.Split(m, " ")
-			//			cpeSerial, _ := strconv.Atoi(i[1])
-			//			fmt.Printf("CPE %d\n", cpeSerial)
-			//			fmt.Printf("LEAF %s\n", i[2])
-			req := Request{i[1], ws, cwmp.GetParameterValues(i[2]), func(msg *WsSendMessage) error {
-				if err := websocket.JSON.Send(ws, msg); err != nil {
-					fmt.Println("error while sending back answer:", err)
-				}
+			cpeSerial, _ := strconv.Atoi(i[1])
 
-				return err
-			}}
+			if((len(i) == 3) && (len(i[2]) > 0)) {
+			fmt.Printf("CPE %d\n", cpeSerial)
+			fmt.Printf("LEAF |%s|\n", i[2])
+			fmt.Printf("LEAF |%d|\n", len(i[2]))
+			mustUnder := Get_ID()
+			
+			req := Request{i[1], ws, cwmp.GetParameterValues(mustUnder, i[2]), func(msg *WsSendMessage) error {
+					if err := websocket.JSON.Send(ws, msg); err != nil {
+						fmt.Println("error while sending back answer:", err)
+					}
+
+					return err
+				}}
 
 			if _, exists := cpes[i[1]]; exists {
 				cpes[i[1]].Queue.Enqueue(req)
@@ -225,6 +230,7 @@ func websocketHandler(ws *websocket.Conn) {
 				}
 			} else {
 				fmt.Println(fmt.Sprintf("CPE with serial %s not found", i[1]))
+			}
 			}
 
 		} else if strings.Contains(m, "writeMib") {
@@ -268,7 +274,9 @@ func websocketHandler(ws *websocket.Conn) {
 			}
 		} else if m == "GetParameterValues" {
 			cpe := data["cpe"].(string)
-			req := Request{cpe, ws, cwmp.GetParameterValues(data["object"].(string)), func(msg *WsSendMessage) error {
+				//var mustUnder string
+				mustUnder := Get_ID()
+				req := Request{cpe, ws, cwmp.GetParameterValues(mustUnder, data["object"].(string)), func(msg *WsSendMessage) error {
 				if err := websocket.JSON.Send(ws, msg); err != nil {
 					fmt.Println("error while sending back answer:", err)
 				}
