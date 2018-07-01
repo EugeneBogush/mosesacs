@@ -162,6 +162,14 @@ var main_css = `
     position: absolute;
 }
 
+.cpe-inform th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #4CAF50;
+    color: white;
+}
+
 .level-2::after {width: 35px;}.level-2>a { padding-left: 15px;}
 .level-3::after {width: 45px;}.level-3>a { padding-left: 25px;}
 .level-4::after {width: 55px;}.level-4>a { padding-left: 35px;}
@@ -231,7 +239,7 @@ var Index = `
             var cpes = new Object();
 
             ws.onopen = function () {
-                console.log('connected');
+                console.log('connected go');
                 var data = new Object();
                 data["MsgType"] = "command";
                 console.log(data)
@@ -246,7 +254,7 @@ var Index = `
 
             ws.onmessage = function (data, flags) {
                 var s = JSON.parse(data.data);
-                console.log(s)
+                console.log(s);
 
                 switch(s.MsgType) {
 
@@ -255,11 +263,14 @@ var Index = `
                         var li = '';
                         for (var x in s.Data['CPES']) {
                             var serial = s.Data['CPES'][x]['SerialNumber'];
+							var OUI = s.Data['CPES'][x]['OUI'];
+							var SoftwareVersion = s.Data['CPES'][x]['SoftwareVersion'];
+							console.log(OUI+" "+SoftwareVersion);
                             cpes[serial] = new Object()
                             for (var attr in s.Data['CPES'][x]) {
                                 cpes[serial][attr] = s.Data['CPES'][x][attr]
                             }
-                            li += '<li><a href="#" class="cpe-id" data-id="'+serial+'">'+serial+'</a></li>';
+                            li += '<li><a href="#" class="cpe-id" data-id="'+serial+'">'+serial+' '+OUI+'</a></li>';
                         }
 
                         $('.cpe-list').append(li);
@@ -283,7 +294,8 @@ var Index = `
 
                         var data = s.Data['ParameterList'];
 
-                        tree_to_table(data)
+                        tree_to_table(data);
+						//console.log("2222222222");
                         break;
 
                     case "GetParameterValuesResponse":
@@ -306,6 +318,8 @@ var Index = `
                             show_summary(objs);
                         } else {
                             tree_to_table(objs);
+						//console.log("333333333");
+
                         }
 
 
@@ -341,7 +355,50 @@ var Index = `
                 $('.mib').show();
                 $('.mib-tree').show();
                 $('.cpe-summary').hide().empty();
+                $('.cpe-inform').show().empty();
+                $('.cpe-inform-h').show();
+
+				//console.log(cpes[cpe_id]['SoftwareVersion']);
+				//console.log(cpes[cpe_id]);
+				//var objs = s.Data['ParameterList'];
+				//active_obj = 1;
+				//tree_to_table2(cpes[cpe_id]);
+				tableCreate(cpes[cpe_id]);
             });
+
+function tableCreate(data) {
+    var tbl = document.getElementsByClassName('cpe-inform')[0];
+    var tbdy = document.createElement('tbody');
+    var tr = document.createElement('tr');
+    var th1 = document.createElement('th');
+	th1.style.width = '80%';
+    th1.innerHTML='Value';
+    tr.appendChild(th1);
+    var th2 = document.createElement('th');
+	th2.style.width = '80%';
+    th2.innerHTML='Value';
+    tr.appendChild(th2);
+    tbdy.appendChild(tr);
+	i=0;
+	for(var obj in data){
+        console.log(data[obj]);
+        var tr = document.createElement('tr');
+        for (var j = 0; j < 2; j++) {
+            if (j == 0) {
+                var td = document.createElement('td');
+                td.innerHTML=obj;
+                tr.appendChild(td) 
+            } else {
+                var td = document.createElement('td');
+                td.innerHTML=data[obj];
+                tr.appendChild(td)
+            }
+        }
+        tbdy.appendChild(tr);
+        i++;
+    }
+    tbl.appendChild(tbdy);
+}
 
             $(document).on('click',"#cpe_summary", function(){
                 summary = true;
@@ -435,6 +492,40 @@ var Index = `
                     $( "[tr-leaf='"+active_obj+"']").after(tr);
                 }
             }
+            $('.mib-tree').show();
+        }
+
+        function tree_to_table2(data){
+            var actual_level = parseInt($( "[tr-leaf='"+active_obj+"']").attr('level'));
+            var next_level = actual_level;
+            
+                var leaf = 'SoftwareVersion';
+				console.log(data['SoftwareVersion']);
+                if (active_obj != leaf) {
+                    next_level = active_obj + 1;
+                }
+				
+                var a = $(document.createElement('a')).addClass('mib-object').attr('leaf', leaf).text(leaf).attr('href','#');
+                var writable = data['Writable'];
+                if (writable!=undefined)
+                    writable_array[leaf] = writable;
+
+//                var value = (data['Value']!=undefined) ? data['Value'].substring(0, 100).replace(/\n/g,'<br>') : '';
+                var value = (data['SoftwareVersion']!=undefined) ? data['SoftwareVersion'].replace(/\n/g,'<br>').replace(/,/g,',<br>') : '';
+
+                var td_leaf = $(document.createElement('td')).append(a).addClass('td-mib').addClass('level-'+next_level);
+                var td_value = $(document.createElement('td')).html(value);
+                var td_writable = $(document.createElement('td')).text(writable_array[leaf]);
+                var a_getvalue = $(document.createElement('a')).text('get value').attr('href','#').addClass('GetParameterValues').attr('leaf',data['Name']);
+                var td_getvalue = $(document.createElement('td')).append(a_getvalue);
+                var tr = $(document.createElement('tr')).attr('tr-leaf',leaf).append(td_leaf).append(td_getvalue).append(td_value).append(td_writable).attr('level', next_level);
+
+                if (active_obj == leaf) {
+                    $( "[tr-leaf='"+active_obj+"']").replaceWith(tr);
+                } else {
+                    $( "[tr-leaf='"+active_obj+"']").after(tr);
+                }
+            
             $('.mib-tree').show();
         }
 
@@ -532,9 +623,11 @@ var Index = `
                     </tr>
                 </tbody>
             </table>
-
             <table class="table cpe-summary table-condensed" style="display: none;">
                 <tbody></tbody>
+            </table>
+			<h3 class="cpe-inform-h" style="display: none;"><center>Inform message</center></h3>
+            <table class="table cpe-inform table-condensed" style="display: none;">
             </table>
 
 
@@ -548,5 +641,4 @@ var Index = `
 
 </body>
 </html>
-
 `
